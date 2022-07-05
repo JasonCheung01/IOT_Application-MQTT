@@ -1,12 +1,18 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-// WiFi 
-const char *ssid = "WorkNet"; // Enter your WiFi name
-const char *password = "itsagoodquestion";  // Enter WiFi password
+// WiFi  
+//const char *ssid = "WorkNet";
+//const char *password = "itsagoodquestion"; 
+
+const char *ssid = "NETGEAR32"; // Enter your WiFi name
+const char *password = "sweetocean572";  // Enter WiFi password
 
 // MQTT Broker
-const char *mqtt_broker = "192.168.2.117"; // Enter your WiFi or Ethernet IP (ip address of my mac)
+//const char *mqtt_broker = "192.168.2.117"; // Enter your WiFi or Ethernet IP (ip address of my mac)
+
+const char *mqtt_broker = "10.0.0.16";
+
 const char *topic = "test/topic";
 const int mqtt_port = 1883;
 
@@ -37,10 +43,11 @@ void setup() {
     Serial.printf("The client %s connects to mosquitto mqtt broker\n", client_id.c_str()); 
     
     if (client.connect(client_id.c_str())) { 
-      Serial.println("Public emqx mqtt broker connected"); 
+      Serial.println("Public emqx mqtt broker connected");  
     } else { 
       Serial.print("failed with state "); 
-      Serial.print(client.state()); 
+      Serial.print(client.state());  
+      Serial.println("");
       delay(2000); 
     } 
   } 
