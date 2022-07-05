@@ -40,6 +40,12 @@ void setup() {
   Serial.print("Connecting to Adafruit IO");
   io.connect();
 
+  // set up a message handler for the 'digital' feed.
+  // the handleMessage function (defined below)
+  // will be called whenever a message is
+  // received from adafruit io.
+  digital->onMessage(handleMessage);
+
   // wait for a connection
   while(io.status() < AIO_CONNECTED) {
     Serial.print(".");
@@ -59,13 +65,7 @@ void loop() {
   // it should always be present at the top of your loop
   // function. it keeps the client connected to
   // io.adafruit.com, and processes any incoming data.
-  io.run(); 
-
-    // set up a message handler for the 'digital' feed.
-  // the handleMessage function (defined below)
-  // will be called whenever a message is
-  // received from adafruit io.
-  digital->onMessage(handleMessage);
+  io.run();
 
 }
 

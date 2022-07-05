@@ -20,8 +20,8 @@
 //   - Adafruit AirLift Shield -> https://www.adafruit.com/product/4285
 //   - Adafruit AirLift FeatherWing -> https://www.adafruit.com/product/4264
 
-#define WIFI_SSID "NETGEAR32"
-#define WIFI_PASS "sweetocean572"
+#define WIFI_SSID "WorkNet"
+#define WIFI_PASS "itsagoodquestion"
 
 // uncomment the following line if you are using airlift
 // #define USE_AIRLIFT
