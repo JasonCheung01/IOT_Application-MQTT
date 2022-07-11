@@ -1,7 +1,7 @@
 import paho.mqtt.client as mqtt; 
 import time;  
 
-MQTT_address = '192.168.2.117';		# (office address)   
+MQTT_address = '192.168.2.117';	# (office address)   
 #MQTT_address = '10.0.0.16';		# (home address) 
 #MQTT_topic = '#';  
 
@@ -12,7 +12,7 @@ MQTT_address = '192.168.2.117';		# (office address)
 def on_connect(client, userdata, flags, rc): 
 	print("Connected successfully with the resulted code: " + str(rc)); 
 	#client.subscribe(MQTT_topic); 
-	client.subscribe('shellies/shellyplugus-083af2004f8c/relay/0');   
+	client.subscribe('shellies/shellyplugus-083af2004f8c/relay/0/');   
 
 # allows us to see the message that we publish  
 def on_message(client, userdata, msg): 

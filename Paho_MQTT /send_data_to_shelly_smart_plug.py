@@ -1,6 +1,7 @@
 import paho.mqtt.client as mqtt; 
 import time; 
 
+#MQTT_address = '192.168.2.129';
 MQTT_address = '192.168.2.117';			# (office address) 
 
 def on_connect(client, userdata, flags, rc):  
@@ -22,7 +23,9 @@ try:
 		msg = input('Enter your message: '); 
 		#MQTT_client.publish('#', msg); 
 		MQTT_client.publish('shellies/shellyplugus-083af2004f8c/relay/0/command',msg);	
+
 except KeyboardInterrupt:  
+
 	MQTT_client.disconnect(); 
 	MQTT_client.loop_stop();  
 
