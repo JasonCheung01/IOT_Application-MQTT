@@ -126,6 +126,7 @@ void loop() {
     else { 
       Serial.println("Fahrenheit failed to send to MQTT Broker "); 
     } 
+    Serial.println(""); 
   } 
 } 
 
