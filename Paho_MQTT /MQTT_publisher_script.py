@@ -6,9 +6,9 @@ import time;
 
 MQTT_address = '192.168.2.117';         # (office address) 
 
-MQTT_topic = input("What topic would you like to publish to? "); 
+MQTT_topic = str(input("What topic would you like to publish to? ")); 
 # Self note, usual port we use is 1883
-MQTT_port = input("What port would you like to use? ");
+MQTT_port = int(input("What port would you like to use? "));
 
 def on_connect(client, userdata, flags, rc):
         if rc == 0:

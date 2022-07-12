@@ -8,7 +8,7 @@ MQTT_address = '192.168.2.117';       # (office address)
 #MQTT_address = '10.0.0.16';             # (home address)  
 
 MQTT_topic = input("What MQTT topic would you like to subscribe to? "); 
-MQTT_port = input("What port would you like to use? "); 
+MQTT_port = int(input("What port would you like to use? ")); 
 
 # notifies if we connnected to the broker successfully, if so subscribe to 
 # our MQTT topic  
