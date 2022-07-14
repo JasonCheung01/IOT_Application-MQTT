@@ -1,8 +1,8 @@
 // ArduCAM Mini demo (C)2016 Lee
 // web: http://www.ArduCAM.com
 // This program is a demo of how to use most of the functions
-// of the library with ArduCAM ESP8266 2MP camera.
-// This demo was made for ArduCAM ESP8266 OV2640 2MP Camera.
+// of the library with ArduCAM ESP8266 5MP camera.
+// This demo was made for ArduCAM ESP8266 OV5642 5MP Camera.
 // It can take photo and send to the Web.
 // It can take photo continuously as video streaming and send to the Web.
 // The demo sketch will do the following tasks:
@@ -11,13 +11,13 @@
 // 3.if server.on("/stream", HTTP_GET, serverStream),it can take photo continuously as video 
 //streaming and send to the Web.
 
-// This program requires the ArduCAM V4.0.0 (or later) library and ArduCAM ESP8266 2MP camera
+// This program requires the ArduCAM V4.0.0 (or later) library and ArduCAM ESP8266 5MP camera
 // and use Arduino IDE 1.5.8 compiler or above
-
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+
 #include <Wire.h>
 #include <ArduCAM.h>
 #include <SPI.h>
@@ -26,12 +26,14 @@
 #error Please select the ArduCAM ESP8266 UNO board in the Tools/Board
 #endif
 
-//This demo can only work on OV2640_MINI_2MP or ARDUCAM_SHIELD_V2 platform.
-#if !(defined (OV2640_MINI_2MP)||(defined (ARDUCAM_SHIELD_V2) && defined (OV2640_CAM)))
+//This demo can only work on OV5642_MINI_5MP or OV5642_MINI_5MP_BIT_ROTATION_FIXED
+//or OV5640_MINI_5MP_PLUS or ARDUCAM_SHIELD_V2 platform.
+#if !(defined (OV5642_MINI_5MP) || defined (OV5642_MINI_5MP_BIT_ROTATION_FIXED) || defined (OV5642_MINI_5MP_PLUS) ||(defined (ARDUCAM_SHIELD_V2) && defined (OV5642_CAM)))
 #error Please select the hardware platform and camera module in the ../libraries/ArduCAM/memorysaver.h file
 #endif
+
 // set GPIO16 as the slave select :
-const int CS = 16;
+const int CS = D0;
 
 //you can change the value of wifiType to select Station or AP mode.
 //Default is AP mode.
@@ -44,13 +46,11 @@ const char *AP_ssid = "arducam_esp8266";
 const char *AP_password = "";
 
 //Station mode you should put your ssid and password
-const char *ssid = "NETGEAR32"; // Put your SSID here
-const char *password = "sweetocean572"; // Put your PASSWORD here
+const char* ssid = "WorkNet"; // Put your SSID here
+const char* password = "itsagoodquestion"; // Put your PASSWORD here
 
 ESP8266WebServer server(80);
-
-ArduCAM myCAM(OV2640, CS);
-
+ArduCAM myCAM(OV5642, CS);
 
 void start_capture(){
   myCAM.clear_fifo_flag();
@@ -61,7 +61,7 @@ void camCapture(ArduCAM myCAM){
   WiFiClient client = server.client();
   
   size_t len = myCAM.read_fifo_length();
-  if (len >= 0x07ffff){
+  if (len >= MAX_FIFO_SIZE){
     Serial.println("Over size.");
     return;
   }else if (len == 0 ){
@@ -71,7 +71,7 @@ void camCapture(ArduCAM myCAM){
   
   myCAM.CS_LOW();
   myCAM.set_fifo_burst();
-  #if !(defined (ARDUCAM_SHIELD_V2) && defined (OV2640_CAM))
+  #if !(defined (OV5642_MINI_5MP_PLUS) ||(defined (ARDUCAM_SHIELD_V2) && defined (OV5642_CAM)))
   SPI.transfer(0xFF);
   #endif
   if (!client.connected()) return;
@@ -79,13 +79,11 @@ void camCapture(ArduCAM myCAM){
   response += "Content-Type: image/jpeg\r\n";
   response += "Content-Length: " + String(len) + "\r\n\r\n";
   server.sendContent(response);
-  
   static const size_t bufferSize = 4096;
   static uint8_t buffer[bufferSize] = {0xFF};
-  
   while (len) {
       size_t will_copy = (len < bufferSize) ? len : bufferSize;
-      SPI.transferBytes(&buffer[0], &buffer[0], will_copy);
+      myCAM.transferBytes(&buffer[0], &buffer[0], will_copy);
       if (!client.connected()) break;
       client.write(&buffer[0], will_copy);
       len -= will_copy;
@@ -99,15 +97,12 @@ void serverCapture(){
   Serial.println("CAM Capturing");
 
   int total_time = 0;
-
   total_time = millis();
   while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK));
   total_time = millis() - total_time;
   Serial.print("capture total_time used (in miliseconds):");
   Serial.println(total_time, DEC);
-  
   total_time = 0;
-  
   Serial.println("CAM Capture Done!");
   total_time = millis();
   camCapture(myCAM);
@@ -118,6 +113,7 @@ void serverCapture(){
 }
 
 void serverStream(){
+
   WiFiClient client = server.client();
   
   String response = "HTTP/1.1 200 OK\r\n";
@@ -125,41 +121,38 @@ void serverStream(){
   server.sendContent(response);
   
   while (1){
-    start_capture();
-    
-    while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK));
-    
+    start_capture();   
+    while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)); 
     size_t len = myCAM.read_fifo_length();
-    if (len >= 0x07ffff){
+    if (len >= MAX_FIFO_SIZE){
       Serial.println("Over size.");
       continue;
     }else if (len == 0 ){
       Serial.println("Size is 0.");
       continue;
     }
-    
+
     myCAM.CS_LOW();
-    myCAM.set_fifo_burst();
-  #if !(defined (ARDUCAM_SHIELD_V2) && defined (OV2640_CAM))
-  SPI.transfer(0xFF);
-  #endif
-  if (!client.connected()) break;
-  response = "--frame\r\n";
-  response += "Content-Type: image/jpeg\r\n\r\n";
-  server.sendContent(response);
+    myCAM.set_fifo_burst(); 
+    #if !(defined (OV5642_MINI_5MP_PLUS) ||(defined (ARDUCAM_SHIELD_V2) && defined (OV5642_CAM)))
+    SPI.transfer(0xFF);
+    #endif   
+    if (!client.connected()) break;
+    response = "--frame\r\n";
+    response += "Content-Type: image/jpeg\r\n\r\n";
+    server.sendContent(response);
     
     static const size_t bufferSize = 4096;
     static uint8_t buffer[bufferSize] = {0xFF};
     
     while (len) {
       size_t will_copy = (len < bufferSize) ? len : bufferSize;
-      SPI.transferBytes(&buffer[0], &buffer[0], will_copy);
+      myCAM.transferBytes(&buffer[0], &buffer[0], will_copy);
       if (!client.connected()) break;
       client.write(&buffer[0], will_copy);
       len -= will_copy;
     }
     myCAM.CS_HIGH();
-    
     if (!client.connected()) break;
   }
 }
@@ -177,7 +170,8 @@ void handleNotFound(){
   
   if (server.hasArg("ql")){
     int ql = server.arg("ql").toInt();
-    myCAM.OV2640_set_JPEG_size(ql);delay(1000);
+    myCAM.OV5642_set_JPEG_size(ql);
+    delay(1000);
     Serial.println("QL change to: " + server.arg("ql"));
   }
 }
@@ -207,23 +201,24 @@ void setup() {
     Serial.println("SPI1 interface Error!");
     while(1);
   }
-
-  //Check if the camera module type is OV2640
-  myCAM.wrSensorReg8_8(0xff, 0x01);
-  myCAM.rdSensorReg8_8(OV2640_CHIPID_HIGH, &vid);
-  myCAM.rdSensorReg8_8(OV2640_CHIPID_LOW, &pid);
-   if ((vid != 0x26 ) && (( pid != 0x41 ) || ( pid != 0x42 )))
-    Serial.println("Can't find OV2640 module!");
-    else
-    Serial.println("OV2640 detected.");
+  //Check if the camera module type is OV5642
+  myCAM.wrSensorReg16_8(0xff, 0x01);
+  myCAM.rdSensorReg16_8(OV5642_CHIPID_HIGH, &vid);
+  myCAM.rdSensorReg16_8(OV5642_CHIPID_LOW, &pid);
+   if((vid != 0x56) || (pid != 0x42)){
+   Serial.println("Can't find OV5642 module!");
+   while(1);
+   }
+   else
+   Serial.println("OV5642 detected.");
  
 
-  //Change to JPEG capture mode and initialize the OV2640 module
+  //Change to JPEG capture mode and initialize the OV5642 module
   myCAM.set_format(JPEG);
-  myCAM.InitCAM();
-  myCAM.OV2640_set_JPEG_size(OV2640_320x240);
-  myCAM.clear_fifo_flag();
-
+   myCAM.InitCAM();
+   myCAM.write_reg(ARDUCHIP_TIM, VSYNC_LEVEL_MASK);   //VSYNC is active HIGH
+   myCAM.OV5642_set_JPEG_size(OV5642_320x240);
+   delay(1000);
   if (wifiType == 0){
     if(!strcmp(ssid,"SSID")){
        Serial.println("Please set your SSID");
@@ -255,7 +250,6 @@ void setup() {
     Serial.println(AP_ssid);
     Serial.print("The password is: ");
     Serial.println(AP_password);
-    
     WiFi.mode(WIFI_AP);
     WiFi.softAP(AP_ssid, AP_password);
     Serial.println("");
@@ -269,7 +263,7 @@ void setup() {
   server.begin();
   Serial.println("Server started");
 }
-
 void loop() {
+
   server.handleClient();
 }
