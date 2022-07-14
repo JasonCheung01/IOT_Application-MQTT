@@ -33,11 +33,11 @@
 #endif
 
 // set GPIO16 as the slave select :
-const int CS = D0;
+const int CS = 16;
 
 //you can change the value of wifiType to select Station or AP mode.
 //Default is AP mode.
-int wifiType = 1; // 0:Station  1:AP
+int wifiType = 0; // 0:Station  1:AP
 
 //AP mode configuration
 //Default is arducam_esp8266.If you want,you can change the AP_aaid  to your favorite name
