@@ -48,7 +48,7 @@ const char *password = "itsagoodquestion";
 //const char *password = "sweetocean572";  
 
 // MQTT Broker  
-const char *mqtt_broker = "192.168.2.117"; // (ip address of my mac)
+const char *mqtt_broker = "192.168.2.69"; // (ip address of my mac)
 //const char *mqtt_broker = "10.0.0.16"; 
 const int mqtt_port = 1883;      
 const char *ultrasound_topic_cm = "esp8266/ultrasound/cm"; 
@@ -373,8 +373,12 @@ void ultrasound() {
   } 
 } 
 
-void loop() {    
-  ArduCam(); 
+void loop() {     
+  Serial.println("ArduCam()");
+  ArduCam();
+  Serial.println("relay_sensor()");
   relay_sensor();
-  ultrasound(); 
+  Serial.println("ultrasound()");
+  ultrasound();
+  Serial.println("end loop");
 } 
