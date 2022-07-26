@@ -27,6 +27,8 @@ const int relay = 15;                // relay
 const int trigPin = 16;             // ultrasound
 const int echoPin = 2;
 
+int isStreaming = 0;
+
 long duration;
 float distanceCm;
 float distanceInch;  
@@ -48,7 +50,7 @@ const char *password = "itsagoodquestion";
 //const char *password = "sweetocean572";  
 
 // MQTT Broker  
-const char *mqtt_broker = "192.168.2.69"; // (ip address of my mac)
+const char *mqtt_broker = "192.168.2.69"; // ip address of Raspberry Pi
 //const char *mqtt_broker = "10.0.0.16"; 
 const int mqtt_port = 1883;      
 const char *ultrasound_topic_cm = "esp8266/ultrasound/cm"; 
@@ -56,6 +58,7 @@ const char *ultrasound_topic_in = "esp8266/ultrasound/in";
 
 // Initialise ArduCam server 
 ESP8266WebServer server(80);
+WiFiClient wclient;
 ArduCAM myCAM(OV5642, CS);
 
 // Initialize our WIFI and MQTT client object
@@ -68,7 +71,7 @@ void start_capture(){
 }
 
 void camCapture(ArduCAM myCAM){
-  WiFiClient client = server.client();
+  wclient = server.client();
   
   size_t len = myCAM.read_fifo_length();
   if (len >= MAX_FIFO_SIZE){
@@ -84,7 +87,7 @@ void camCapture(ArduCAM myCAM){
   #if !(defined (OV5642_MINI_5MP_PLUS) ||(defined (ARDUCAM_SHIELD_V2) && defined (OV5642_CAM)))
   SPI.transfer(0xFF);
   #endif
-  if (!client.connected()) return;
+  if (!wclient.connected()) return;
   String response = "HTTP/1.1 200 OK\r\n";
   response += "Content-Type: image/jpeg\r\n";
   response += "Content-Length: " + String(len) + "\r\n\r\n";
@@ -94,14 +97,15 @@ void camCapture(ArduCAM myCAM){
   while (len) {
       size_t will_copy = (len < bufferSize) ? len : bufferSize;
       myCAM.transferBytes(&buffer[0], &buffer[0], will_copy);
-      if (!client.connected()) break;
-      client.write(&buffer[0], will_copy);
+      if (!wclient.connected()) break;
+      wclient.write(&buffer[0], will_copy);
       len -= will_copy;
   }
   
   myCAM.CS_HIGH();
 }
 
+// called on URL: /capture
 void serverCapture(){
   start_capture();
   Serial.println("CAM Capturing");
@@ -124,22 +128,31 @@ void serverCapture(){
 
 void serverStream(){
 
-  WiFiClient client = server.client();
+  String response;
+
+  // if we are just starting to stream for a new client
+  if (!isStreaming) {
+    wclient = server.client();
+    
+    response = "HTTP/1.1 200 OK\r\n";
+    response += "Content-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n";
+    server.sendContent(response);
+  }
   
-  String response = "HTTP/1.1 200 OK\r\n";
-  response += "Content-Type: multipart/x-mixed-replace; boundary=frame\r\n\r\n";
-  server.sendContent(response);
+  // while (1){
+  isStreaming = 1;
   
-  while (1){
     start_capture();   
     while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)); 
     size_t len = myCAM.read_fifo_length();
     if (len >= MAX_FIFO_SIZE){
       Serial.println("Over size.");
-      continue;
+      // continue;
+    return;
     }else if (len == 0 ){
       Serial.println("Size is 0.");
-      continue;
+      // continue;
+    return;
     }
 
     myCAM.CS_LOW();
@@ -147,7 +160,11 @@ void serverStream(){
     #if !(defined (OV5642_MINI_5MP_PLUS) ||(defined (ARDUCAM_SHIELD_V2) && defined (OV5642_CAM)))
     SPI.transfer(0xFF);
     #endif   
-    if (!client.connected()) break;
+    if (!wclient.connected()) {
+    // break;
+    isStreaming = 0;
+    return;
+  }
     response = "--frame\r\n";
     response += "Content-Type: image/jpeg\r\n\r\n";
     server.sendContent(response);
@@ -158,13 +175,22 @@ void serverStream(){
     while (len) {
       size_t will_copy = (len < bufferSize) ? len : bufferSize;
       myCAM.transferBytes(&buffer[0], &buffer[0], will_copy);
-      if (!client.connected()) break;
-      client.write(&buffer[0], will_copy);
+      if (!wclient.connected()) {
+      // break;
+      isStreaming = 0;
+      return;
+    }
+      wclient.write(&buffer[0], will_copy);
       len -= will_copy;
     }
     myCAM.CS_HIGH();
-    if (!client.connected()) break;
+    if (!wclient.connected()) {
+    // break;
+    isStreaming = 0;
+    return;
   }
+  
+  // }
 }
 
 void handleNotFound(){
@@ -373,12 +399,17 @@ void ultrasound() {
   } 
 } 
 
-void loop() {     
-  Serial.println("ArduCam()");
-  ArduCam();
+void loop() {
+  if (isStreaming) {
+    // continue streaming
+    serverStream();
+  } else {
+    Serial.println("ArduCam()");
+    ArduCam();
+  }
   Serial.println("relay_sensor()");
   relay_sensor();
   Serial.println("ultrasound()");
   ultrasound();
   Serial.println("end loop");
-} 
+}
