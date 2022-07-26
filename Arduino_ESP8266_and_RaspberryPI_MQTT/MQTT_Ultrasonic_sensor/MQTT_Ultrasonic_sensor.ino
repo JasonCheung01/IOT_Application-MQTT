@@ -13,14 +13,13 @@ float distanceCm;
 float distanceInch; 
 
 // WIFI  
-//const char *ssid = "WorkNet";
-//const char *password = "itsagoodquestion";  
-const char *ssid = "NETGEAR32";      
-const char *password = "sweetocean572";  
+const char *ssid = "WorkNet";
+const char *password = "itsagoodquestion";  
+//const char *ssid = "NETGEAR32";      
+//const char *password = "sweetocean572";  
 
 // MQTT Broker  
-//const char *mqtt_broker = "192.168.2.117"; // (ip address in office)
-const char *mqtt_broker = "10.0.0.16";  
+const char *mqtt_broker = "192.168.2.69"; // (ip address of pi)  
 const char *ultrasound_topic_cm = "esp8266/ultrasound/cm"; 
 const char *ultrasound_topic_in = "esp8266/ultrasound/in";
 const int mqtt_port = 1883;   
