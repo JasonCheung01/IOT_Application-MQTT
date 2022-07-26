@@ -1,15 +1,20 @@
-const int PIRSensorOutPin = 12;  
+int PIRSensor = 12;  
+int relaySensor = 14; 
+int sensorValue = 0;
 
 void setup() { 
-  Serial.begin(9600); 
-  pinMode(PIRSensorOutPin, INPUT); 
+  Serial.begin(9600);
+  pinMode(PIRSensor, INPUT); 
+  pinMode(relaySensor, OUTPUT);  
 }
 
-void loop() { 
-  if (digitalRead(PIRSensorOutPin) == LOW)
-    {
-       Serial.println("Person detected!");
-       exit();//Print to serial monitor
-    }
-    else { }//Serial.println("No detection");}
+void loop() {  
+  sensorValue = digitalRead(PIRSensor); 
+  
+  if (sensorValue == HIGH) {  
+      Serial.println("Motion Detected");
+      digitalWrite(relaySensor, HIGH);
+  } else {    
+    digitalWrite(relaySensor, LOW);
+  }
 }

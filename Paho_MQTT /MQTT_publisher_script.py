@@ -4,7 +4,8 @@
 import paho.mqtt.client as mqtt;
 import time;
 
-MQTT_address = '192.168.2.117';         # (office address) 
+#MQTT_address = '192.168.2.117';         # (office address) 
+MQTT_address = '10.0.0.16';
 
 MQTT_topic = str(input("What topic would you like to publish to? ")); 
 # Self note, usual port we use is 1883

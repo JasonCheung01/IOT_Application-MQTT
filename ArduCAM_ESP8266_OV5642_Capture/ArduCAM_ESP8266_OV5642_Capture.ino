@@ -46,8 +46,10 @@ const char *AP_ssid = "arducam_esp8266";
 const char *AP_password = "";
 
 //Station mode you should put your ssid and password
-const char* ssid = "WorkNet"; // Put your SSID here
-const char* password = "itsagoodquestion"; // Put your PASSWORD here
+//const char* ssid = "WorkNet"; // Put your SSID here
+//const char* password = "itsagoodquestion"; // Put your PASSWORD here
+const char* ssid = "NETGEAR32"; // Put your SSID here
+const char* password = "sweetocean572"; // Put your PASSWORD here 
 
 ESP8266WebServer server(80);
 ArduCAM myCAM(OV5642, CS);
