@@ -27,7 +27,7 @@ const int relay = 15;                // relay
 const int trigPin = 16;             // ultrasound
 const int echoPin = 2;
 
-int isStreaming = 0;
+int isStreaming = 0; 
 
 long duration;
 float distanceCm;
@@ -50,8 +50,8 @@ const char *password = "itsagoodquestion";
 //const char *password = "sweetocean572";  
 
 // MQTT Broker  
-const char *mqtt_broker = "192.168.2.69"; // ip address of Raspberry Pi
-//const char *mqtt_broker = "10.0.0.16"; 
+//const char *mqtt_broker = "192.168.2.69"; // ip address of Raspberry Pi
+const char *mqtt_broker = "192.168.2.117"; 
 const int mqtt_port = 1883;      
 const char *ultrasound_topic_cm = "esp8266/ultrasound/cm"; 
 const char *ultrasound_topic_in = "esp8266/ultrasound/in";
@@ -399,17 +399,39 @@ void ultrasound() {
   } 
 } 
 
-void loop() {
+void loop() { 
+  unsigned long start_Time = millis(); 
+  
+  unsigned long end_Time; 
+  
   if (isStreaming) {
     // continue streaming
-    serverStream();
+    serverStream(); 
+    Serial.println("ArduCam Time Duration: ");  
+    end_Time = millis();
+    Serial.println(end_Time - start_Time);  
+ 
   } else {
     Serial.println("ArduCam()");
-    ArduCam();
-  }
+    ArduCam(); 
+    Serial.println("ArduCam Time Duration: ");  
+    end_Time = millis();  
+    Serial.println(end_Time - start_Time);  
+  } 
+  
+  start_Time = millis(); 
   Serial.println("relay_sensor()");
-  relay_sensor();
+  relay_sensor(); 
+  Serial.println("Relay Time Duration: ");  
+  end_Time = millis();  
+  Serial.println(end_Time - start_Time);  
+
+  start_Time = millis(); 
   Serial.println("ultrasound()");
-  ultrasound();
-  Serial.println("end loop");
+  ultrasound(); 
+  Serial.println("Ultrasound Time Duration: "); 
+  end_Time = millis();  
+  Serial.println(end_Time - start_Time);   
+  
+  Serial.println("end loop"); 
 }
